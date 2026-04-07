@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const { initializeModels } = require('./models');
 const authRouter = require('./routes/auth');
+const productsRouter = require('./routes/products');
 
 dotenv.config();
 
@@ -13,6 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth', authRouter);
+app.use('/api/products', productsRouter);
 
 app.get('/', (req, res) => {
   res.json({ status: 'POS API running' });
@@ -23,7 +25,7 @@ async function startServer() {
     await initializeModels();
 
     app.listen(PORT, () => {
-      console.log(`POS server running on port ${PORT}`);
+      console.log('POS server running on port ' + PORT);
     });
   } catch (error) {
     console.error('Failed to start server:', error.message);
