@@ -5,6 +5,7 @@ const { initializeModels } = require('./models');
 const authRouter = require('./routes/auth');
 const productsRouter = require('./routes/products');
 const salesRouter = require('./routes/sales');
+const paymentsRouter = require('./routes/payments');
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/sales', salesRouter);
 app.use('/api/dashboard', salesRouter);
+app.use('/api/payments', paymentsRouter);
 
 app.get('/', (req, res) => {
   res.json({ status: 'POS API running' });
