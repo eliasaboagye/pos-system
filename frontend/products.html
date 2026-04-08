@@ -259,7 +259,6 @@
               <th>Supplier</th>
               <th>Price</th>
               <th>Stock</th>
-              <th>Threshold</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -377,7 +376,7 @@
       tableBody.innerHTML = '';
 
       if (filteredProducts.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="7">No matching products found.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6">No matching products found.</td></tr>';
         return;
       }
 
@@ -391,7 +390,6 @@
             <td><input class="inline-input" data-field="supplier" value="${product.supplier || ''}"></td>
             <td><input class="inline-input" data-field="price" type="number" step="0.01" value="${product.price}"></td>
             <td><input class="inline-input" data-field="quantity" type="number" min="0" value="${product.quantity}"></td>
-            <td><input class="inline-input" data-field="low_stock_threshold" type="number" min="0" value="${product.low_stock_threshold}"></td>
             <td class="actions-cell">
               <div class="action-buttons">
                 <button class="primary" type="button">Save</button>
@@ -411,7 +409,6 @@
 
             updated.price = Number(updated.price);
             updated.quantity = Number(updated.quantity);
-            updated.low_stock_threshold = Number(updated.low_stock_threshold);
 
             try {
               await apiPut(`/api/products/${product.id}`, updated);
@@ -434,7 +431,6 @@
             <td>${product.supplier || '-'}</td>
             <td>GHS ${formatCurrency(product.price)}</td>
             <td class="stock-cell">${product.quantity}<br>${getStockBadge(product)}</td>
-            <td>${product.low_stock_threshold}</td>
             <td class="actions-cell">
               <div class="action-buttons">
                 <button class="secondary" type="button">Edit</button>
@@ -479,9 +475,8 @@
         }
 
         products = data.products || [];
-        filteredProducts = [...products];
         populateFilters();
-        renderProducts();
+        applyFilters();
       } catch (error) {
         setMessage(error.message, 'error');
       }
