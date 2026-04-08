@@ -83,6 +83,12 @@
       font-weight: 700;
       color: var(--navy);
     }
+    .stat-value.low-stock {
+      color: #f9c74f;
+    }
+    .stat-value.out-of-stock {
+      color: #c62828;
+    }
     .stat-card.link-card {
       text-decoration: none;
       display: block;
@@ -159,12 +165,12 @@
       </a>
       <a class="stat-card link-card" href="./products.html?stockStatus=low">
         <div class="stat-label">Low Stock Items</div>
-        <div id="inventoryLowStock" class="stat-value">0</div>
+        <div id="inventoryLowStock" class="stat-value low-stock">0</div>
         <div class="stat-link">Show low stock items</div>
       </a>
       <a class="stat-card link-card" href="./products.html?stockStatus=out">
         <div class="stat-label">Out of Stock</div>
-        <div id="inventoryOutOfStock" class="stat-value">0</div>
+        <div id="inventoryOutOfStock" class="stat-value out-of-stock">0</div>
         <div class="stat-link">Show out of stock items</div>
       </a>
     </section>
@@ -249,16 +255,29 @@
         document.getElementById('revenueToday').textContent = data.total_revenue_today;
         document.getElementById('totalProducts').textContent = data.total_products;
 
-        const inventoryData = await apiGet('/api/products/report/stock');
+        const productsData = await apiGet('/api/products');
 
-        if (!inventoryData) {
+        if (!productsData) {
           return;
         }
 
-        inventoryTotalProducts.textContent = inventoryData.total_products;
-        inventoryUnitsInStock.textContent = inventoryData.total_units_in_stock;
-        inventoryLowStock.textContent = inventoryData.low_stock_count;
-        inventoryOutOfStock.textContent = inventoryData.out_of_stock_count;
+        const products = productsData.products || [];
+        const totalUnitsInStock = products.reduce(
+          (sum, product) => sum + Number(product.quantity || 0),
+          0
+        );
+        const lowStockCount = products.filter((product) => {
+          const quantity = Number(product.quantity || 0);
+          return quantity > 0 && quantity < 5;
+        }).length;
+        const outOfStockCount = products.filter(
+          (product) => Number(product.quantity || 0) === 0
+        ).length;
+
+        inventoryTotalProducts.textContent = products.length;
+        inventoryUnitsInStock.textContent = totalUnitsInStock;
+        inventoryLowStock.textContent = lowStockCount;
+        inventoryOutOfStock.textContent = outOfStockCount;
       } catch (error) {
         document.getElementById('salesToday').textContent = '-';
         document.getElementById('revenueToday').textContent = '-';

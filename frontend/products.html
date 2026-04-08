@@ -163,6 +163,10 @@
       background: #fff3e0;
       color: #ef6c00;
     }
+    .stock-badge.out {
+      background: #ffebee;
+      color: #c62828;
+    }
     .stock-badge.good {
       background: #e8f5e9;
       color: #2e7d32;
@@ -293,9 +297,18 @@
     }
 
     function getStockBadge(product) {
-      const isLow = Number(product.quantity) <= Number(product.low_stock_threshold);
-      const badgeClass = isLow ? 'low' : 'good';
-      const label = isLow ? 'Low Stock' : 'In Stock';
+      const quantity = Number(product.quantity);
+      let badgeClass = 'good';
+      let label = 'In Stock';
+
+      if (quantity === 0) {
+        badgeClass = 'out';
+        label = 'Out of Stock';
+      } else if (quantity < 5) {
+        badgeClass = 'low';
+        label = 'Low Stock';
+      }
+
       return `<span class="stock-badge ${badgeClass}">${label}</span>`;
     }
 
@@ -330,7 +343,7 @@
         const matchesSearch = product.name.toLowerCase().includes(searchTerm);
         const matchesCategory = !selectedCategory || product.category === selectedCategory;
         const matchesSupplier = !selectedSupplier || product.supplier === selectedSupplier;
-        const isLowStock = Number(product.quantity) <= Number(product.low_stock_threshold);
+        const isLowStock = Number(product.quantity) > 0 && Number(product.quantity) < 5;
         const isOutOfStock = Number(product.quantity) === 0;
         const matchesStockStatus =
           !stockStatusFilter ||

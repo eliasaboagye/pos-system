@@ -20,11 +20,16 @@ router.get('/', async (req, res) => {
 router.get('/low-stock', authMiddleware, async (req, res) => {
   try {
     const products = await Product.findAll({
-      where: Sequelize.where(
-        Sequelize.col('quantity'),
-        '<=',
-        Sequelize.col('low_stock_threshold')
-      ),
+      where: {
+        [Sequelize.Op.and]: [
+          {
+            quantity: {
+              [Sequelize.Op.lt]: 5,
+              [Sequelize.Op.gt]: 0,
+            },
+          },
+        ],
+      },
       order: [['quantity', 'ASC']],
     });
 
@@ -41,7 +46,7 @@ router.get('/report/stock', authMiddleware, async (req, res) => {
     const totalProducts = products.length;
     const totalUnitsInStock = products.reduce((sum, product) => sum + Number(product.quantity), 0);
     const lowStockProducts = products.filter(
-      (product) => Number(product.quantity) <= Number(product.low_stock_threshold)
+      (product) => Number(product.quantity) > 0 && Number(product.quantity) < 5
     );
     const outOfStockProducts = products.filter((product) => Number(product.quantity) === 0);
 
