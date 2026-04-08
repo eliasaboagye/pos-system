@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales</title>
+  <style>
+    :root {
+      --navy: #1a237e;
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d8deea;
+      --shadow: 0 14px 34px rgba(26, 35, 126, 0.08);
+      --danger: #c62828;
+      --success: #2e7d32;
+      --warning: #ef6c00;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .navbar { background: var(--navy); color: #fff; }
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .brand { font-size: 1.15rem; font-weight: 700; }
+    .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
+    .nav-links a, .nav-links button {
+      color: #fff;
+      text-decoration: none;
+      border: 0;
+      background: transparent;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .nav-links a.active, .nav-links a:hover, .nav-links button:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+    }
+    .page-header h1 {
+      margin: 0 0 8px;
+      color: var(--navy);
+    }
+    .page-header p {
+      margin: 0 0 20px;
+      color: var(--muted);
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .card h2 {
+      margin-top: 0;
+      color: var(--navy);
+    }
+    .message {
+      min-height: 22px;
+      margin-bottom: 14px;
+      color: var(--danger);
+      font-size: 0.95rem;
+    }
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: middle;
+    }
+    th {
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .link-button {
+      border: 0;
+      background: #eef1ff;
+      color: var(--navy);
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .pay-button {
+      border: 0;
+      background: var(--navy);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .pay-actions {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .pay-actions input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.95rem;
+    }
+    .detail-grid {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .badge.pending {
+      background: #fff3e0;
+      color: var(--warning);
+    }
+    .badge.paid {
+      background: #e8f5e9;
+      color: var(--success);
+    }
+    .empty-state {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-inner">
+      <div class="brand">POS System</div>
+      <div class="nav-links">
+        <a href="./dashboard.html">Dashboard</a>
+        <a href="./products.html">Products</a>
+        <a href="./checkout.html">Checkout</a>
+        <a class="active" href="./sales.html">Sales</a>
+        <button id="logoutButton" type="button">Logout</button>
+      </div>
+    </div>
+  </nav>
+  <main class="page">
+    <section class="page-header">
+      <h1>Sales History</h1>
+      <p>View completed checkouts, inspect sale details, and trace which items were sold.</p>
+    </section>
+    <div class="layout">
+      <section class="card">
+        <h2>All Sales</h2>
+        <div id="salesMessage" class="message"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Sale ID</th>
+                <th>Cashier</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>View</th>
+              </tr>
+            </thead>
+            <tbody id="salesTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="card">
+        <h2>Sale Details</h2>
+        <div id="detailMessage" class="message"></div>
+        <div id="saleDetailContent" class="empty-state">Select a sale to view its items and payment details.</div>
+      </section>
+    </div>
+  </main>
+  <script src="./js/auth.js"></script>
+  <script src="./js/api.js"></script>
+  <script>
+    redirectIfNotLoggedIn();
+
+    const salesTableBody = document.getElementById('salesTableBody');
+    const salesMessage = document.getElementById('salesMessage');
+    const detailMessage = document.getElementById('detailMessage');
+    const saleDetailContent = document.getElementById('saleDetailContent');
+    let sales = [];
+
+    document.getElementById('logoutButton').addEventListener('click', logout);
+
+    function formatCurrency(value) {
+      return Number(value).toFixed(2);
+    }
+
+    function formatDate(value) {
+      return new Date(value).toLocaleString();
+    }
+
+    function getStatusBadge(status) {
+      const normalized = status === 'paid' ? 'paid' : 'pending';
+      return `<span class="badge ${normalized}">${status}</span>`;
+    }
+
+    function renderSales() {
+      salesTableBody.innerHTML = '';
+
+      if (sales.length === 0) {
+        salesTableBody.innerHTML = '<tr><td colspan="6" class="empty-state">No sales found yet.</td></tr>';
+        return;
+      }
+
+      sales.forEach((sale) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>#${sale.id}</td>
+          <td>${sale.user?.username || '-'}</td>
+          <td>GHS ${formatCurrency(sale.total_amount)}</td>
+          <td>${getStatusBadge(sale.payment_status)}</td>
+          <td>${formatDate(sale.createdAt)}</td>
+          <td><button class="link-button" type="button">View</button></td>
+        `;
+
+        row.querySelector('button').addEventListener('click', () => loadSaleDetail(sale.id));
+        salesTableBody.appendChild(row);
+      });
+    }
+
+    function renderSaleDetail(sale) {
+      const showPayAction = sale.payment_status !== 'paid';
+      const itemsHtml = sale.items.length
+        ? sale.items.map((item) => `
+            <tr>
+              <td>${item.product?.name || 'Unknown product'}</td>
+              <td>${item.quantity}</td>
+              <td>GHS ${formatCurrency(item.unit_price)}</td>
+              <td>GHS ${formatCurrency(Number(item.unit_price) * item.quantity)}</td>
+            </tr>
+          `).join('')
+        : '<tr><td colspan="4" class="empty-state">No sale items found.</td></tr>';
+
+      saleDetailContent.className = '';
+      saleDetailContent.innerHTML = `
+        <div class="detail-grid">
+          <div class="detail-row"><strong>Sale ID</strong><span>#${sale.id}</span></div>
+          <div class="detail-row"><strong>Cashier</strong><span>${sale.user?.username || '-'}</span></div>
+          <div class="detail-row"><strong>Payment Status</strong><span>${getStatusBadge(sale.payment_status)}</span></div>
+          <div class="detail-row"><strong>Total Amount</strong><span>GHS ${formatCurrency(sale.total_amount)}</span></div>
+          <div class="detail-row"><strong>Date</strong><span>${formatDate(sale.createdAt)}</span></div>
+          <div class="detail-row"><strong>Reference</strong><span>${sale.paystack_reference || '-'}</span></div>
+        </div>
+        ${showPayAction ? `
+          <div class="pay-actions">
+            <label for="retryEmail"><strong>Customer Email</strong></label>
+            <input id="retryEmail" type="email" placeholder="test@example.com">
+            <button id="retryPaymentButton" class="pay-button" type="button">Continue Payment</button>
+          </div>
+        ` : ''}
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Line Total</th>
+              </tr>
+            </thead>
+            <tbody>${itemsHtml}</tbody>
+          </table>
+        </div>
+      `;
+
+      if (showPayAction) {
+        document.getElementById('retryPaymentButton').addEventListener('click', async () => {
+          const email = document.getElementById('retryEmail').value.trim();
+
+          if (!email) {
+            detailMessage.textContent = 'Enter a customer email before continuing payment.';
+            return;
+          }
+
+          detailMessage.textContent = 'Initializing payment...';
+
+          try {
+            const paymentData = await apiPost('/api/payments/initialize', {
+              sale_id: sale.id,
+              email,
+            });
+
+            if (!paymentData) {
+              return;
+            }
+
+            if (!paymentData.authorization_url) {
+              throw new Error('No authorization URL returned');
+            }
+
+            window.location.href = paymentData.authorization_url;
+          } catch (error) {
+            detailMessage.textContent = error.message;
+          }
+        });
+      }
+    }
+
+    async function loadSales() {
+      salesMessage.textContent = '';
+
+      try {
+        const data = await apiGet('/api/sales');
+
+        if (!data) {
+          return;
+        }
+
+        sales = data.sales || [];
+        renderSales();
+
+        if (sales.length > 0) {
+          await loadSaleDetail(sales[0].id);
+        }
+      } catch (error) {
+        salesMessage.textContent = error.message;
+      }
+    }
+
+    async function loadSaleDetail(id) {
+      detailMessage.textContent = '';
+
+      try {
+        const data = await apiGet(`/api/sales/${id}`);
+
+        if (!data) {
+          return;
+        }
+
+        renderSaleDetail(data.sale);
+      } catch (error) {
+        saleDetailContent.className = 'empty-state';
+        saleDetailContent.textContent = 'Unable to load sale details.';
+        detailMessage.textContent = error.message;
+      }
+    }
+
+    loadSales();
+  </script>
+</body>
+</html>

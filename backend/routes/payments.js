@@ -21,14 +21,6 @@ router.post('/initialize', authMiddleware, async (req, res) => {
 
     const existingPayment = await Payment.findOne({ where: { sale_id } });
 
-    if (existingPayment) {
-      return res.status(200).json({
-        authorization_url: null,
-        reference: existingPayment.paystack_reference,
-        payment: existingPayment,
-      });
-    }
-
     const response = await axios.post(
       'https://api.paystack.co/transaction/initialize',
       {
@@ -54,6 +46,19 @@ router.post('/initialize', authMiddleware, async (req, res) => {
         },
       }
     );
+
+    if (existingPayment) {
+      existingPayment.paystack_reference = response.data.data.reference;
+      existingPayment.amount = sale.total_amount;
+      existingPayment.status = 'pending';
+      existingPayment.paid_at = null;
+      await existingPayment.save();
+
+      return res.status(200).json({
+        authorization_url: response.data.data.authorization_url,
+        reference: response.data.data.reference,
+      });
+    }
 
     if (response.data.status) {
       await Payment.create({

@@ -3,10 +3,159 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment Success</title>
+  <title>Payment Status</title>
+  <style>
+    :root {
+      --navy: #1a237e;
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d8deea;
+      --shadow: 0 14px 34px rgba(26, 35, 126, 0.08);
+      --danger: #c62828;
+      --success: #2e7d32;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: var(--text);
+    }
+    .card {
+      width: 100%;
+      max-width: 560px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 28px;
+    }
+    h1 { margin: 0 0 12px; color: var(--navy); }
+    .status {
+      min-height: 22px;
+      margin-bottom: 18px;
+      font-weight: 600;
+    }
+    .status.error { color: var(--danger); }
+    .status.success { color: var(--success); }
+    .receipt {
+      display: grid;
+      gap: 12px;
+      margin: 18px 0 24px;
+      padding: 18px;
+      border-radius: 14px;
+      background: #f8faff;
+      border: 1px solid var(--border);
+    }
+    .receipt-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .actions a,
+    .actions button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .primary { background: var(--navy); color: #fff; }
+    .secondary { background: #eef1ff; color: var(--navy); }
+  </style>
 </head>
 <body>
-  <h1>Payment Success</h1>
-  <p>Payment completed successfully.</p>
+  <div class="card">
+    <h1>Payment Status</h1>
+    <div id="statusText" class="status">Verifying payment...</div>
+    <div id="receipt" class="receipt" hidden></div>
+    <div id="actions" class="actions"></div>
+  </div>
+  <script>
+    const statusText = document.getElementById('statusText');
+    const receipt = document.getElementById('receipt');
+    const actions = document.getElementById('actions');
+    const params = new URLSearchParams(window.location.search);
+    const reference = params.get('reference');
+
+    function addAction(label, href, isButton) {
+      if (isButton) {
+        const button = document.createElement('button');
+        button.className = 'secondary';
+        button.type = 'button';
+        button.textContent = label;
+        button.addEventListener('click', () => window.print());
+        actions.appendChild(button);
+        return;
+      }
+
+      const link = document.createElement('a');
+      link.className = href.includes('checkout') ? 'primary' : 'secondary';
+      link.href = href;
+      link.textContent = label;
+      actions.appendChild(link);
+    }
+
+    function renderReceipt(data) {
+      receipt.hidden = false;
+      receipt.innerHTML = `
+        <div class="receipt-row"><strong>Sale ID</strong><span>${data.sale_id}</span></div>
+        <div class="receipt-row"><strong>Amount Paid</strong><span>GHS ${Number(data.amount).toFixed(2)}</span></div>
+        <div class="receipt-row"><strong>Reference</strong><span>${data.reference}</span></div>
+        <div class="receipt-row"><strong>Timestamp</strong><span>${new Date().toLocaleString()}</span></div>
+      `;
+    }
+
+    async function verifyPayment() {
+      if (!reference) {
+        statusText.className = 'status error';
+        statusText.textContent = 'No payment reference found';
+        addAction('Try Again', './checkout.html');
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:5000/api/payments/verify/${reference}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Verification failed');
+        }
+
+        if (data.status === 'success') {
+          statusText.className = 'status success';
+          statusText.textContent = 'Payment verified successfully.';
+          renderReceipt(data);
+          addAction('Print', '#', true);
+          addAction('New Sale', './checkout.html');
+          return;
+        }
+
+        statusText.className = 'status error';
+        statusText.textContent = data.message || 'Payment failed';
+        addAction('Try Again', './checkout.html');
+      } catch (error) {
+        statusText.className = 'status error';
+        statusText.textContent = error.message;
+        addAction('Try Again', './checkout.html');
+      }
+    }
+
+    verifyPayment();
+  </script>
 </body>
 </html>

@@ -1,13 +1,14 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 const { initializeModels } = require('./models');
 const authRouter = require('./routes/auth');
 const productsRouter = require('./routes/products');
 const salesRouter = require('./routes/sales');
 const paymentsRouter = require('./routes/payments');
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5000;

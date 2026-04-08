@@ -4,9 +4,402 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Checkout</title>
+  <style>
+    :root {
+      --navy: #1a237e;
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d8deea;
+      --shadow: 0 14px 34px rgba(26, 35, 126, 0.08);
+      --danger: #c62828;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .navbar { background: var(--navy); color: #fff; }
+    .nav-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .brand { font-size: 1.15rem; font-weight: 700; }
+    .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
+    .nav-links a, .nav-links button {
+      color: #fff;
+      text-decoration: none;
+      border: 0;
+      background: transparent;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .nav-links a.active, .nav-links a:hover, .nav-links button:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 20px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    h1, h2 { margin-top: 0; color: var(--navy); }
+    .product-grid {
+      display: grid;
+      gap: 14px;
+    }
+    .product-card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      background: #fbfcff;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .product-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(26, 35, 126, 0.08);
+    }
+    .product-title { font-weight: 700; margin-bottom: 8px; }
+    .product-meta {
+      color: var(--muted);
+      font-size: 0.95rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: middle;
+    }
+    th {
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .qty-controls button,
+    .pay-button,
+    .remove-button {
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .qty-controls button {
+      width: 32px;
+      height: 32px;
+      background: #eef1ff;
+      color: var(--navy);
+    }
+    .remove-button {
+      background: #ffebee;
+      color: var(--danger);
+      padding: 8px 12px;
+    }
+    .summary {
+      margin-top: 20px;
+      display: grid;
+      gap: 14px;
+    }
+    .total {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.95rem;
+    }
+    .pay-button {
+      background: var(--navy);
+      color: #fff;
+      padding: 14px 16px;
+      font-size: 1rem;
+    }
+    .pay-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .status {
+      min-height: 22px;
+      font-size: 0.95rem;
+      color: var(--danger);
+    }
+    @media (max-width: 840px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-  <h1>Checkout</h1>
-  <p>Checkout page scaffold.</p>
+  <nav class="navbar">
+    <div class="nav-inner">
+      <div class="brand">POS System</div>
+      <div class="nav-links">
+        <a href="./dashboard.html">Dashboard</a>
+        <a href="./products.html">Products</a>
+        <a class="active" href="./checkout.html">Checkout</a>
+        <a href="./sales.html">Sales</a>
+        <button id="logoutButton" type="button">Logout</button>
+      </div>
+    </div>
+  </nav>
+  <main class="page">
+    <h1>Checkout</h1>
+    <div class="layout">
+      <section class="card">
+        <h2>Products</h2>
+        <div id="productGrid" class="product-grid"></div>
+      </section>
+      <section class="card">
+        <h2>Cart</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Line Total</th>
+                <th>Remove</th>
+              </tr>
+            </thead>
+            <tbody id="cartBody"></tbody>
+          </table>
+        </div>
+        <div class="summary">
+          <div class="total">Total: GHS <span id="runningTotal">0.00</span></div>
+          <div>
+            <label for="email">Customer Email</label>
+            <input id="email" type="email" placeholder="test@example.com">
+          </div>
+          <button id="payButton" class="pay-button" type="button" disabled>Pay with Paystack</button>
+          <div id="checkoutStatus" class="status"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script src="./js/auth.js"></script>
+  <script src="./js/api.js"></script>
+  <script>
+    redirectIfNotLoggedIn();
+
+    const productGrid = document.getElementById('productGrid');
+    const cartBody = document.getElementById('cartBody');
+    const runningTotal = document.getElementById('runningTotal');
+    const emailInput = document.getElementById('email');
+    const payButton = document.getElementById('payButton');
+    const checkoutStatus = document.getElementById('checkoutStatus');
+    const cart = new Map();
+    let products = [];
+
+    document.getElementById('logoutButton').addEventListener('click', logout);
+
+    function formatCurrency(value) {
+      return Number(value).toFixed(2);
+    }
+
+    function renderProducts() {
+      productGrid.innerHTML = '';
+
+      products.forEach((product) => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'product-card';
+        card.innerHTML = `
+          <div class="product-title">${product.name}</div>
+          <div class="product-meta">
+            <span>${product.category || 'Uncategorized'}</span>
+            <span>Stock: ${product.quantity}</span>
+          </div>
+          <div style="margin-top: 10px; font-weight: 700; color: #1a237e;">GHS ${formatCurrency(product.price)}</div>
+        `;
+        card.addEventListener('click', () => addToCart(product));
+        productGrid.appendChild(card);
+      });
+    }
+
+    function addToCart(product) {
+      const existing = cart.get(product.id);
+
+      if (existing) {
+        if (existing.quantity < product.quantity) {
+          existing.quantity += 1;
+        }
+      } else {
+        cart.set(product.id, {
+          product_id: product.id,
+          name: product.name,
+          price: Number(product.price),
+          stock: product.quantity,
+          quantity: 1,
+        });
+      }
+
+      renderCart();
+    }
+
+    function updateCartItem(productId, change) {
+      const item = cart.get(productId);
+
+      if (!item) {
+        return;
+      }
+
+      const nextQty = item.quantity + change;
+
+      if (nextQty <= 0) {
+        cart.delete(productId);
+      } else if (nextQty <= item.stock) {
+        item.quantity = nextQty;
+      }
+
+      renderCart();
+    }
+
+    function removeCartItem(productId) {
+      cart.delete(productId);
+      renderCart();
+    }
+
+    function renderCart() {
+      cartBody.innerHTML = '';
+      let total = 0;
+
+      cart.forEach((item) => {
+        const lineTotal = item.price * item.quantity;
+        total += lineTotal;
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.name}</td>
+          <td>
+            <div class="qty-controls">
+              <button type="button">-</button>
+              <span>${item.quantity}</span>
+              <button type="button">+</button>
+            </div>
+          </td>
+          <td>GHS ${formatCurrency(item.price)}</td>
+          <td>GHS ${formatCurrency(lineTotal)}</td>
+          <td><button type="button" class="remove-button">Remove</button></td>
+        `;
+
+        const buttons = row.querySelectorAll('button');
+        buttons[0].addEventListener('click', () => updateCartItem(item.product_id, -1));
+        buttons[1].addEventListener('click', () => updateCartItem(item.product_id, 1));
+        buttons[2].addEventListener('click', () => removeCartItem(item.product_id));
+
+        cartBody.appendChild(row);
+      });
+
+      runningTotal.textContent = formatCurrency(total);
+      payButton.disabled = cart.size === 0;
+    }
+
+    async function loadProducts() {
+      try {
+        const data = await apiGet('/api/products');
+
+        if (!data) {
+          return;
+        }
+
+        products = data.products || [];
+        renderProducts();
+      } catch (error) {
+        checkoutStatus.textContent = error.message;
+      }
+    }
+
+    payButton.addEventListener('click', async () => {
+      const email = emailInput.value.trim();
+
+      if (!email) {
+        checkoutStatus.textContent = 'Email is required before payment.';
+        return;
+      }
+
+      checkoutStatus.textContent = 'Preparing checkout...';
+      payButton.disabled = true;
+      payButton.textContent = 'Loading...';
+
+      try {
+        const items = Array.from(cart.values()).map((item) => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+        }));
+
+        const saleData = await apiPost('/api/sales', { items });
+
+        if (!saleData) {
+          return;
+        }
+
+        const paymentData = await apiPost('/api/payments/initialize', {
+          sale_id: saleData.sale_id,
+          email,
+        });
+
+        if (!paymentData) {
+          return;
+        }
+
+        if (!paymentData.authorization_url) {
+          throw new Error('No authorization URL returned');
+        }
+
+        window.location.href = paymentData.authorization_url;
+      } catch (error) {
+        checkoutStatus.textContent = error.message;
+        payButton.disabled = cart.size === 0;
+        payButton.textContent = 'Pay with Paystack';
+      }
+    });
+
+    loadProducts();
+  </script>
 </body>
 </html>

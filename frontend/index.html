@@ -3,10 +3,134 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>POS System</title>
+  <title>POS Login</title>
+  <style>
+    :root {
+      --navy: #1a237e;
+      --navy-dark: #11195c;
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --danger: #c62828;
+      --border: #d8deea;
+      --shadow: 0 18px 40px rgba(26, 35, 126, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #e8ecff 0%, #f6f8fe 45%, #eef3ff 100%);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card);
+      border-radius: 20px;
+      padding: 32px 28px;
+      box-shadow: var(--shadow);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.9rem;
+      color: var(--navy);
+    }
+    p {
+      margin: 0 0 24px;
+      color: var(--muted);
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+    input {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 1rem;
+      margin-bottom: 16px;
+    }
+    input:focus {
+      outline: 2px solid rgba(26, 35, 126, 0.16);
+      border-color: var(--navy);
+    }
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      background: var(--navy);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 14px;
+      cursor: pointer;
+    }
+    button:hover { background: var(--navy-dark); }
+    .error {
+      min-height: 22px;
+      margin-top: 14px;
+      color: var(--danger);
+      font-size: 0.95rem;
+    }
+  </style>
 </head>
 <body>
-  <h1>POS System</h1>
-  <p>Welcome to the POS frontend scaffold.</p>
+  <div class="login-card">
+    <h1>POS System</h1>
+    <p>Sign in to manage products, sales, and payments.</p>
+    <form id="loginForm">
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" required>
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required>
+      <button type="submit">Login</button>
+      <div id="errorMessage" class="error"></div>
+    </form>
+  </div>
+  <script src="./js/auth.js"></script>
+  <script>
+    const form = document.getElementById('loginForm');
+    const errorMessage = document.getElementById('errorMessage');
+
+    if (isLoggedIn()) {
+      window.location.href = './dashboard.html';
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      errorMessage.textContent = '';
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        const response = await fetch('http://localhost:5000/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Login failed');
+        }
+
+        setToken(data.token);
+        window.location.href = './dashboard.html';
+      } catch (error) {
+        errorMessage.textContent = error.message || 'Unable to login';
+      }
+    });
+  </script>
 </body>
 </html>

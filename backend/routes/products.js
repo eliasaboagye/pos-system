@@ -1,4 +1,5 @@
 const express = require('express');
+const { Sequelize } = require('sequelize');
 const { Product } = require('../models');
 const authMiddleware = require('../middleware/auth');
 
@@ -67,6 +68,10 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     return res.status(200).json({ message: 'Product updated', product });
   } catch (err) {
+    if (err instanceof Sequelize.ValidationError) {
+      return res.status(400).json({ message: err.message });
+    }
+
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
@@ -84,6 +89,12 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 
     return res.status(200).json({ message: 'Product deleted' });
   } catch (err) {
+    if (err instanceof Sequelize.ForeignKeyConstraintError) {
+      return res.status(400).json({
+        message: 'Cannot delete product because it is linked to existing sales',
+      });
+    }
+
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
