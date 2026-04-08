@@ -59,6 +59,12 @@
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 18px;
+      margin-bottom: 18px;
+    }
+    .inventory-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
     }
     .stat-card {
       background: var(--card);
@@ -77,6 +83,21 @@
       font-weight: 700;
       color: var(--navy);
     }
+    .stat-card.link-card {
+      text-decoration: none;
+      display: block;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .stat-card.link-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 34px rgba(26, 35, 126, 0.12);
+    }
+    .stat-link {
+      margin-top: 12px;
+      color: var(--navy);
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
     .status-banner {
       margin-bottom: 18px;
       padding: 14px 16px;
@@ -88,6 +109,7 @@
     }
     @media (max-width: 760px) {
       .stats-grid { grid-template-columns: 1fr; }
+      .inventory-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -124,6 +146,28 @@
         <div id="totalProducts" class="stat-value">0</div>
       </article>
     </section>
+    <section class="inventory-grid">
+      <a class="stat-card link-card" href="./products.html">
+        <div class="stat-label">Total Products</div>
+        <div id="inventoryTotalProducts" class="stat-value">0</div>
+        <div class="stat-link">Open inventory</div>
+      </a>
+      <a class="stat-card link-card" href="./products.html">
+        <div class="stat-label">Units in Stock</div>
+        <div id="inventoryUnitsInStock" class="stat-value">0</div>
+        <div class="stat-link">View products</div>
+      </a>
+      <a class="stat-card link-card" href="./products.html?stockStatus=low">
+        <div class="stat-label">Low Stock Items</div>
+        <div id="inventoryLowStock" class="stat-value">0</div>
+        <div class="stat-link">Show low stock items</div>
+      </a>
+      <a class="stat-card link-card" href="./products.html?stockStatus=out">
+        <div class="stat-label">Out of Stock</div>
+        <div id="inventoryOutOfStock" class="stat-value">0</div>
+        <div class="stat-link">Show out of stock items</div>
+      </a>
+    </section>
   </main>
   <script src="./js/auth.js"></script>
   <script src="./js/api.js"></script>
@@ -131,6 +175,10 @@
     redirectIfNotLoggedIn();
     document.getElementById('logoutButton').addEventListener('click', logout);
     const statusBanner = document.getElementById('statusBanner');
+    const inventoryTotalProducts = document.getElementById('inventoryTotalProducts');
+    const inventoryUnitsInStock = document.getElementById('inventoryUnitsInStock');
+    const inventoryLowStock = document.getElementById('inventoryLowStock');
+    const inventoryOutOfStock = document.getElementById('inventoryOutOfStock');
 
     function showStatus(message) {
       statusBanner.textContent = message;
@@ -200,10 +248,25 @@
         document.getElementById('salesToday').textContent = data.total_sales_today;
         document.getElementById('revenueToday').textContent = data.total_revenue_today;
         document.getElementById('totalProducts').textContent = data.total_products;
+
+        const inventoryData = await apiGet('/api/products/report/stock');
+
+        if (!inventoryData) {
+          return;
+        }
+
+        inventoryTotalProducts.textContent = inventoryData.total_products;
+        inventoryUnitsInStock.textContent = inventoryData.total_units_in_stock;
+        inventoryLowStock.textContent = inventoryData.low_stock_count;
+        inventoryOutOfStock.textContent = inventoryData.out_of_stock_count;
       } catch (error) {
         document.getElementById('salesToday').textContent = '-';
         document.getElementById('revenueToday').textContent = '-';
         document.getElementById('totalProducts').textContent = '-';
+        inventoryTotalProducts.textContent = '-';
+        inventoryUnitsInStock.textContent = '-';
+        inventoryLowStock.textContent = '-';
+        inventoryOutOfStock.textContent = '-';
         showStatus(error.message || 'Unable to load dashboard statistics.');
       }
     }

@@ -112,18 +112,30 @@
       margin-top: 8px;
       font-size: 0.95rem;
     }
+    .filter-banner {
+      display: none;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid #cfd7ff;
+      background: #eef1ff;
+      color: var(--navy);
+      font-weight: 600;
+    }
     .message.success { color: var(--success); }
     .message.error { color: var(--danger); }
     .table-wrap { overflow-x: auto; }
     table {
       width: 100%;
       border-collapse: collapse;
+      table-layout: fixed;
     }
     th, td {
       padding: 14px 12px;
       border-bottom: 1px solid var(--border);
       text-align: left;
       vertical-align: middle;
+      word-wrap: break-word;
     }
     th {
       color: var(--muted);
@@ -131,12 +143,39 @@
       text-transform: uppercase;
       letter-spacing: 0.03em;
     }
-    .actions {
+    .actions-cell {
+      width: 140px;
+    }
+    .action-buttons {
       display: flex;
       gap: 8px;
-      flex-wrap: wrap;
+      flex-direction: column;
+      align-items: stretch;
     }
-    .inline-input { min-width: 110px; }
+    .stock-badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .stock-badge.low {
+      background: #fff3e0;
+      color: #ef6c00;
+    }
+    .stock-badge.good {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .inline-input {
+      min-width: 0;
+      width: 100%;
+      padding: 10px 8px;
+      font-size: 0.9rem;
+    }
+    .stock-cell {
+      line-height: 1.6;
+    }
     @media (max-width: 760px) {
       .toolbar-grid { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
@@ -188,6 +227,7 @@
     </section>
     <section class="card">
       <h2>Inventory</h2>
+      <div id="filterBanner" class="filter-banner"></div>
       <div class="toolbar-grid">
         <div>
           <label for="searchInput">Search</label>
@@ -215,6 +255,7 @@
               <th>Supplier</th>
               <th>Price</th>
               <th>Stock</th>
+              <th>Threshold</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -234,6 +275,8 @@
     const searchInput = document.getElementById('searchInput');
     const categoryFilter = document.getElementById('categoryFilter');
     const supplierFilter = document.getElementById('supplierFilter');
+    const filterBanner = document.getElementById('filterBanner');
+    const stockStatusFilter = new URLSearchParams(window.location.search).get('stockStatus');
     let products = [];
     let filteredProducts = [];
     let editingId = null;
@@ -247,6 +290,13 @@
 
     function formatCurrency(value) {
       return Number(value).toFixed(2);
+    }
+
+    function getStockBadge(product) {
+      const isLow = Number(product.quantity) <= Number(product.low_stock_threshold);
+      const badgeClass = isLow ? 'low' : 'good';
+      const label = isLow ? 'Low Stock' : 'In Stock';
+      return `<span class="stock-badge ${badgeClass}">${label}</span>`;
     }
 
     function populateFilters() {
@@ -280,18 +330,41 @@
         const matchesSearch = product.name.toLowerCase().includes(searchTerm);
         const matchesCategory = !selectedCategory || product.category === selectedCategory;
         const matchesSupplier = !selectedSupplier || product.supplier === selectedSupplier;
+        const isLowStock = Number(product.quantity) <= Number(product.low_stock_threshold);
+        const isOutOfStock = Number(product.quantity) === 0;
+        const matchesStockStatus =
+          !stockStatusFilter ||
+          (stockStatusFilter === 'low' && isLowStock) ||
+          (stockStatusFilter === 'out' && isOutOfStock);
 
-        return matchesSearch && matchesCategory && matchesSupplier;
+        return matchesSearch && matchesCategory && matchesSupplier && matchesStockStatus;
       });
 
       renderProducts();
+    }
+
+    function applyStockStatusBanner() {
+      if (stockStatusFilter === 'low') {
+        filterBanner.textContent = 'Showing low stock items from the dashboard.';
+        filterBanner.style.display = 'block';
+        return;
+      }
+
+      if (stockStatusFilter === 'out') {
+        filterBanner.textContent = 'Showing out of stock items from the dashboard.';
+        filterBanner.style.display = 'block';
+        return;
+      }
+
+      filterBanner.textContent = '';
+      filterBanner.style.display = 'none';
     }
 
     function renderProducts() {
       tableBody.innerHTML = '';
 
       if (filteredProducts.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6">No matching products found.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7">No matching products found.</td></tr>';
         return;
       }
 
@@ -305,9 +378,12 @@
             <td><input class="inline-input" data-field="supplier" value="${product.supplier || ''}"></td>
             <td><input class="inline-input" data-field="price" type="number" step="0.01" value="${product.price}"></td>
             <td><input class="inline-input" data-field="quantity" type="number" min="0" value="${product.quantity}"></td>
-            <td class="actions">
-              <button class="primary" type="button">Save</button>
-              <button class="secondary" type="button">Cancel</button>
+            <td><input class="inline-input" data-field="low_stock_threshold" type="number" min="0" value="${product.low_stock_threshold}"></td>
+            <td class="actions-cell">
+              <div class="action-buttons">
+                <button class="primary" type="button">Save</button>
+                <button class="secondary" type="button">Cancel</button>
+              </div>
             </td>
           `;
 
@@ -322,6 +398,7 @@
 
             updated.price = Number(updated.price);
             updated.quantity = Number(updated.quantity);
+            updated.low_stock_threshold = Number(updated.low_stock_threshold);
 
             try {
               await apiPut(`/api/products/${product.id}`, updated);
@@ -343,10 +420,13 @@
             <td>${product.category || '-'}</td>
             <td>${product.supplier || '-'}</td>
             <td>GHS ${formatCurrency(product.price)}</td>
-            <td>${product.quantity}</td>
-            <td class="actions">
-              <button class="secondary" type="button">Edit</button>
-              <button class="danger" type="button">Delete</button>
+            <td class="stock-cell">${product.quantity}<br>${getStockBadge(product)}</td>
+            <td>${product.low_stock_threshold}</td>
+            <td class="actions-cell">
+              <div class="action-buttons">
+                <button class="secondary" type="button">Edit</button>
+                <button class="danger" type="button">Delete</button>
+              </div>
             </td>
           `;
 
@@ -404,6 +484,7 @@
         supplier: document.getElementById('supplier').value.trim(),
         price: Number(document.getElementById('price').value),
         quantity: Number(document.getElementById('quantity').value || 0),
+        low_stock_threshold: 5,
       };
 
       try {
@@ -422,6 +503,7 @@
     supplierFilter.addEventListener('change', applyFilters);
 
     loadProducts();
+    applyStockStatusBanner();
   </script>
 </body>
 </html>
