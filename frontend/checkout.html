@@ -58,6 +58,11 @@
       grid-template-columns: 1.1fr 1fr;
       gap: 20px;
     }
+    .left-column,
+    .right-column {
+      display: grid;
+      gap: 20px;
+    }
     .card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -66,6 +71,11 @@
       padding: 22px;
     }
     h1, h2 { margin-top: 0; color: var(--navy); }
+    .toolbar {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
     .product-grid {
       display: grid;
       gap: 14px;
@@ -89,6 +99,12 @@
       display: flex;
       justify-content: space-between;
       gap: 12px;
+    }
+    .product-card.out-of-stock {
+      cursor: not-allowed;
+      opacity: 0.55;
+      box-shadow: none;
+      transform: none;
     }
     .table-wrap { overflow-x: auto; }
     table {
@@ -136,6 +152,24 @@
       display: grid;
       gap: 14px;
     }
+    .summary-grid {
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+      border-radius: 14px;
+      background: #f8faff;
+      border: 1px solid var(--border);
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+    .summary-row strong {
+      color: var(--text);
+    }
     .total {
       font-size: 1.2rem;
       font-weight: 700;
@@ -153,6 +187,14 @@
       border-radius: 12px;
       font-size: 0.95rem;
     }
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.95rem;
+      background: #fff;
+    }
     .pay-button {
       background: var(--navy);
       color: #fff;
@@ -167,6 +209,58 @@
       min-height: 22px;
       font-size: 0.95rem;
       color: var(--danger);
+    }
+    .receipt-preview {
+      display: grid;
+      gap: 12px;
+    }
+    .receipt-sheet {
+      border: 1px dashed #c7d0e5;
+      border-radius: 16px;
+      padding: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+    }
+    .receipt-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 14px;
+    }
+    .receipt-title {
+      font-weight: 800;
+      color: var(--navy);
+    }
+    .receipt-subtitle {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .receipt-items {
+      display: grid;
+      gap: 10px;
+      margin: 14px 0;
+    }
+    .receipt-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.95rem;
+    }
+    .receipt-footer {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: grid;
+      gap: 8px;
+    }
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #eef1ff;
+      color: var(--navy);
+      font-size: 0.85rem;
+      font-weight: 700;
     }
     @media (max-width: 840px) {
       .layout { grid-template-columns: 1fr; }
@@ -189,36 +283,69 @@
   <main class="page">
     <h1>Checkout</h1>
     <div class="layout">
-      <section class="card">
-        <h2>Products</h2>
-        <div id="productGrid" class="product-grid"></div>
-      </section>
-      <section class="card">
-        <h2>Cart</h2>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Qty</th>
-                <th>Unit Price</th>
-                <th>Line Total</th>
-                <th>Remove</th>
-              </tr>
-            </thead>
-            <tbody id="cartBody"></tbody>
-          </table>
-        </div>
-        <div class="summary">
-          <div class="total">Total: GHS <span id="runningTotal">0.00</span></div>
-          <div>
-            <label for="email">Customer Email</label>
-            <input id="email" type="email" placeholder="test@example.com">
+      <div class="left-column">
+        <section class="card">
+          <h2>Products</h2>
+          <div class="toolbar">
+            <div>
+              <label for="searchInput">Search Products</label>
+              <input id="searchInput" type="search" placeholder="Search by name or category">
+            </div>
           </div>
-          <button id="payButton" class="pay-button" type="button" disabled>Pay with Paystack</button>
-          <div id="checkoutStatus" class="status"></div>
-        </div>
-      </section>
+          <div id="productGrid" class="product-grid"></div>
+        </section>
+        <section class="card">
+          <h2>Receipt Preview</h2>
+          <div class="receipt-preview">
+            <div id="receiptPreview" class="receipt-sheet"></div>
+          </div>
+        </section>
+      </div>
+      <div class="right-column">
+        <section class="card">
+          <h2>Cart</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Qty</th>
+                  <th>Unit Price</th>
+                  <th>Line Total</th>
+                  <th>Remove</th>
+                </tr>
+              </thead>
+              <tbody id="cartBody"></tbody>
+            </table>
+          </div>
+          <div class="summary">
+            <div class="summary-grid">
+              <div class="summary-row"><span>Items in Cart</span><strong id="itemCount">0</strong></div>
+              <div class="summary-row"><span>Subtotal</span><strong>GHS <span id="subtotalAmount">0.00</span></strong></div>
+              <div>
+                <label for="discountType">Discount Type</label>
+                <select id="discountType">
+                  <option value="none">No Discount</option>
+                  <option value="percent">Percentage (%)</option>
+                  <option value="fixed">Fixed Amount (GHS)</option>
+                </select>
+              </div>
+              <div>
+                <label for="discountValue">Discount Value</label>
+                <input id="discountValue" type="number" min="0" step="0.01" value="0">
+              </div>
+              <div class="summary-row"><span>Discount</span><strong>GHS <span id="discountAmount">0.00</span></strong></div>
+            </div>
+            <div class="total">Total: GHS <span id="runningTotal">0.00</span></div>
+            <div>
+              <label for="email">Customer Email</label>
+              <input id="email" type="email" placeholder="test@example.com">
+            </div>
+            <button id="payButton" class="pay-button" type="button" disabled>Pay with Paystack</button>
+            <div id="checkoutStatus" class="status"></div>
+          </div>
+        </section>
+      </div>
     </div>
   </main>
   <script src="./js/auth.js"></script>
@@ -229,11 +356,19 @@
     const productGrid = document.getElementById('productGrid');
     const cartBody = document.getElementById('cartBody');
     const runningTotal = document.getElementById('runningTotal');
+    const subtotalAmount = document.getElementById('subtotalAmount');
+    const discountAmount = document.getElementById('discountAmount');
+    const itemCount = document.getElementById('itemCount');
     const emailInput = document.getElementById('email');
     const payButton = document.getElementById('payButton');
     const checkoutStatus = document.getElementById('checkoutStatus');
+    const searchInput = document.getElementById('searchInput');
+    const discountType = document.getElementById('discountType');
+    const discountValue = document.getElementById('discountValue');
+    const receiptPreview = document.getElementById('receiptPreview');
     const cart = new Map();
     let products = [];
+    let filteredProducts = [];
 
     document.getElementById('logoutButton').addEventListener('click', logout);
 
@@ -241,13 +376,56 @@
       return Number(value).toFixed(2);
     }
 
+    function getDiscountSummary(subtotal) {
+      const type = discountType.value;
+      const rawValue = Number(discountValue.value || 0);
+      let amount = 0;
+      let label = 'No discount';
+
+      if (type === 'percent' && rawValue > 0) {
+        amount = subtotal * (rawValue / 100);
+        label = `${rawValue}% discount`;
+      } else if (type === 'fixed' && rawValue > 0) {
+        amount = rawValue;
+        label = `GHS ${formatCurrency(rawValue)} discount`;
+      }
+
+      if (amount > subtotal) {
+        amount = subtotal;
+      }
+
+      return {
+        type,
+        value: rawValue,
+        amount,
+        label,
+      };
+    }
+
+    function applyProductFilter() {
+      const query = searchInput.value.trim().toLowerCase();
+
+      filteredProducts = products.filter((product) => {
+        const haystack = `${product.name} ${product.category || ''}`.toLowerCase();
+        return haystack.includes(query);
+      });
+
+      renderProducts();
+    }
+
     function renderProducts() {
       productGrid.innerHTML = '';
 
-      products.forEach((product) => {
+      if (filteredProducts.length === 0) {
+        productGrid.innerHTML = '<div class="status">No matching products found.</div>';
+        return;
+      }
+
+      filteredProducts.forEach((product) => {
         const card = document.createElement('button');
         card.type = 'button';
-        card.className = 'product-card';
+        card.className = `product-card ${product.quantity <= 0 ? 'out-of-stock' : ''}`;
+        card.disabled = product.quantity <= 0;
         card.innerHTML = `
           <div class="product-title">${product.name}</div>
           <div class="product-meta">
@@ -256,7 +434,9 @@
           </div>
           <div style="margin-top: 10px; font-weight: 700; color: #1a237e;">GHS ${formatCurrency(product.price)}</div>
         `;
-        card.addEventListener('click', () => addToCart(product));
+        if (product.quantity > 0) {
+          card.addEventListener('click', () => addToCart(product));
+        }
         productGrid.appendChild(card);
       });
     }
@@ -306,11 +486,13 @@
 
     function renderCart() {
       cartBody.innerHTML = '';
-      let total = 0;
+      let subtotal = 0;
+      let totalItems = 0;
 
       cart.forEach((item) => {
         const lineTotal = item.price * item.quantity;
-        total += lineTotal;
+        subtotal += lineTotal;
+        totalItems += item.quantity;
 
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -335,8 +517,42 @@
         cartBody.appendChild(row);
       });
 
+      const discount = getDiscountSummary(subtotal);
+      const total = subtotal - discount.amount;
+
+      subtotalAmount.textContent = formatCurrency(subtotal);
+      discountAmount.textContent = formatCurrency(discount.amount);
       runningTotal.textContent = formatCurrency(total);
+      itemCount.textContent = totalItems;
       payButton.disabled = cart.size === 0;
+      renderReceiptPreview(subtotal, discount, total, totalItems);
+    }
+
+    function renderReceiptPreview(subtotal, discount, total, totalItems) {
+      const lines = Array.from(cart.values()).map((item) => `
+        <div class="receipt-line">
+          <span>${item.name} x ${item.quantity}</span>
+          <strong>GHS ${formatCurrency(item.price * item.quantity)}</strong>
+        </div>
+      `).join('');
+
+      receiptPreview.innerHTML = `
+        <div class="receipt-head">
+          <div>
+            <div class="receipt-title">Receipt Preview</div>
+            <div class="receipt-subtitle">Review items before checkout</div>
+          </div>
+          <span class="pill">${totalItems} item${totalItems === 1 ? '' : 's'}</span>
+        </div>
+        <div class="receipt-items">
+          ${lines || '<div class="receipt-subtitle">No items in cart yet.</div>'}
+        </div>
+        <div class="receipt-footer">
+          <div class="receipt-line"><span>Subtotal</span><strong>GHS ${formatCurrency(subtotal)}</strong></div>
+          <div class="receipt-line"><span>${discount.label}</span><strong>- GHS ${formatCurrency(discount.amount)}</strong></div>
+          <div class="receipt-line"><span>Total Payable</span><strong>GHS ${formatCurrency(total)}</strong></div>
+        </div>
+      `;
     }
 
     async function loadProducts() {
@@ -348,7 +564,9 @@
         }
 
         products = data.products || [];
+        filteredProducts = [...products];
         renderProducts();
+        renderCart();
       } catch (error) {
         checkoutStatus.textContent = error.message;
       }
@@ -372,7 +590,15 @@
           quantity: item.quantity,
         }));
 
-        const saleData = await apiPost('/api/sales', { items });
+        const discount = getDiscountSummary(
+          Array.from(cart.values()).reduce((sum, item) => sum + (item.price * item.quantity), 0)
+        );
+
+        const saleData = await apiPost('/api/sales', {
+          items,
+          discount_type: discount.type,
+          discount_value: discount.value,
+        });
 
         if (!saleData) {
           return;
@@ -398,6 +624,10 @@
         payButton.textContent = 'Pay with Paystack';
       }
     });
+
+    searchInput.addEventListener('input', applyProductFilter);
+    discountType.addEventListener('change', renderCart);
+    discountValue.addEventListener('input', renderCart);
 
     loadProducts();
   </script>

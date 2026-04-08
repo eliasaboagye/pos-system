@@ -9,7 +9,7 @@ router.post('/', authMiddleware, async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const { items } = req.body;
+    const { items, discount_type, discount_value } = req.body;
 
     if (!Array.isArray(items) || items.length === 0) {
       await transaction.rollback();
@@ -17,7 +17,7 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     const preparedItems = [];
-    let totalAmount = 0;
+    let subtotalAmount = 0;
 
     for (const item of items) {
       const product = await Product.findByPk(item.product_id, { transaction });
@@ -35,7 +35,7 @@ router.post('/', authMiddleware, async (req, res) => {
       }
 
       const unitPrice = Number(product.price);
-      totalAmount += unitPrice * item.quantity;
+      subtotalAmount += unitPrice * item.quantity;
 
       preparedItems.push({
         product,
@@ -44,6 +44,21 @@ router.post('/', authMiddleware, async (req, res) => {
         unit_price: product.price,
       });
     }
+
+    let discountAmount = 0;
+    const normalizedDiscountValue = Number(discount_value || 0);
+
+    if (discount_type === 'percent' && normalizedDiscountValue > 0) {
+      discountAmount = subtotalAmount * (normalizedDiscountValue / 100);
+    } else if (discount_type === 'fixed' && normalizedDiscountValue > 0) {
+      discountAmount = normalizedDiscountValue;
+    }
+
+    if (discountAmount > subtotalAmount) {
+      discountAmount = subtotalAmount;
+    }
+
+    const totalAmount = subtotalAmount - discountAmount;
 
     const sale = await Sale.create(
       {
@@ -74,6 +89,8 @@ router.post('/', authMiddleware, async (req, res) => {
     return res.status(201).json({
       message: 'Sale created',
       sale_id: sale.id,
+      subtotal_amount: subtotalAmount.toFixed(2),
+      discount_amount: discountAmount.toFixed(2),
       total_amount: totalAmount.toFixed(2),
     });
   } catch (err) {
