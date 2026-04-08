@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { name, category, price, quantity } = req.body;
+    const { name, category, supplier, price, quantity } = req.body;
 
     if (!name || price === undefined || price === null || price === '') {
       return res.status(400).json({ message: 'Name and price are required' });
@@ -28,6 +28,7 @@ router.post('/', authMiddleware, async (req, res) => {
     const product = await Product.create({
       name,
       category,
+      supplier,
       price,
       quantity,
     });
@@ -41,7 +42,7 @@ router.post('/', authMiddleware, async (req, res) => {
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, category, price, quantity } = req.body;
+    const { name, category, supplier, price, quantity } = req.body;
     const product = await Product.findByPk(id);
 
     if (!product) {
@@ -54,6 +55,10 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     if (category !== undefined) {
       product.category = category;
+    }
+
+    if (supplier !== undefined) {
+      product.supplier = supplier;
     }
 
     if (price !== undefined) {
